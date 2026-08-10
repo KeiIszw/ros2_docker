@@ -4,28 +4,45 @@ Unity の建機シミュレータ `~/github/OperaSim-PhysX` を ROS 2 Humble か
 Docker 環境です。ホストの `~/ros2_ws` をコンテナ内の `/home/ros/ros2_ws` にマウントし、
 Unity Robotics の ROS TCP Endpoint を `127.0.0.1:10000` で公開します。
 
-## 導入済みソース
+## ワークスペース
 
-- `~/ros2_ws/src/tb20e_ros2`: TB20e 用 `ros2_control` hardware interface
-- `~/ros2_ws/src/ROS-TCP-Endpoint`: Unity ROS TCP Connector の ROS 2 Endpoint
+既定では、ホストの `~/ros2_ws` をコンテナの `/home/ros/ros2_ws` にマウントします。
+現在の `src` には次の ROS 2 パッケージがあります。
 
-再取得する場合は、空の `~/ros2_ws/src` に対して次を実行できます。
+- `com3_msgs`: COM3 の message/action 定義
+- `ros_tcp_endpoint`: Unity ROS TCP Connector の ROS 2 Endpoint
+- `scratch_hci_bridge`: Scratch HCI と OperaSim の ROS 2 topic を接続する bridge
+- `tb20e_control`: TB20e 用 `ros2_control` hardware interface
+
+`ros2.repos` に登録されたソースを再取得する場合は、空の `~/ros2_ws/src` に対して
+次を実行できます。
 
 ```bash
-cd ~/docker
+cd ~/ros2_docker
 vcs import ~/ros2_ws/src < ros2.repos
 ```
 
 ## ビルド
 
+Docker image を作成し、コンテナ内で `src` 以下の全パッケージの依存関係を導入して
+ビルドします。コマンドはホスト側で実行してください。
+
 ```bash
-cd ~/docker
+cd ~/ros2_docker
 docker compose build
-docker compose run --rm ros2 bash -c \
-  'rosdep update && rosdep install --from-paths src --ignore-src --rosdistro humble -y && colcon build --symlink-install'
+docker compose run --rm --no-deps ros2 bash -c '
+  set -e
+  source /opt/ros/humble/setup.bash
+  cd /home/ros/ros2_ws
+  rosdep update
+  rosdep install --from-paths src --ignore-src --rosdistro humble -y
+  colcon build --symlink-install
+'
 ```
 
 生成される `build`、`install`、`log` はホストの `~/ros2_ws` に保存されます。
+ビルド成功時は最後に `Summary: 4 packages finished` と表示されます。パッケージ数は
+`src` の内容によって変わります。
 
 `permission denied while trying to connect to the docker API` と表示される環境では、
 上記および以降の `docker` コマンドを `sudo docker ...` として実行してください。
@@ -35,7 +52,7 @@ docker compose run --rm ros2 bash -c \
 ## Endpoint の起動
 
 ```bash
-cd ~/docker
+cd ~/ros2_docker
 docker compose up -d
 docker compose logs -f ros2
 ```
@@ -55,7 +72,7 @@ Endpoint を止める場合は `docker compose down` を実行します。
 別ターミナルで次を実行してください。
 
 ```bash
-cd ~/docker
+cd ~/ros2_docker
 docker compose exec ros2 bash
 ros2 topic echo /current_boom_angle --once
 ros2 launch tb20e_control tb20e_control.launch.py
@@ -67,7 +84,7 @@ hardware の activate 時に全軸の角度 feedback が必要なため、Unity 
 別ターミナルから controller 状態を調べる例です。
 
 ```bash
-cd ~/docker
+cd ~/ros2_docker
 docker compose exec ros2 bash -ic 'ros2 control list_controllers'
 docker compose exec ros2 bash -ic 'ros2 topic echo /joint_states --once'
 ```
@@ -86,9 +103,9 @@ docker compose exec ros2 bash -ic "ros2 action send_goal --feedback \
 実行中の TB20e launch を終了してから、次を実行します。Unity は起動したままでも構いません。
 
 ```bash
-cd ~/docker
+cd ~/ros2_docker
 docker compose exec ros2 bash -ic \
-  'colcon build --symlink-install --packages-select tb20e_control'
+  'source /opt/ros/humble/setup.bash && cd /home/ros/ros2_ws && colcon build --symlink-install --packages-select tb20e_control'
 ```
 
 既に開いている shell は `source ~/ros2_ws/install/setup.bash` を再実行してください。
