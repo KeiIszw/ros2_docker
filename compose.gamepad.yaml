@@ -1,0 +1,10 @@
+services:
+  ros2:
+    # SDL-based joy_node needs the matching event device as well as js0.
+    # Bind the input directory so reconnects and changing event numbers work.
+    volumes:
+      - /dev/input:/dev/input:ro
+    device_cgroup_rules:
+      - "c 13:* rm"
+    group_add:
+      - ${INPUT_GID:-107}

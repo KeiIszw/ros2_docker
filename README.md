@@ -81,6 +81,31 @@ ros2 launch tb20e_control tb20e_control.launch.py
 hardware の activate 時に全軸の角度 feedback が必要なため、Unity が停止した状態で
 `tb20e_control.launch.py` を起動すると初期化が timeout します。
 
+### USBゲームパッドでの起動
+
+ホストでゲームパッドのdeviceと `input` groupのGIDを確認します。
+
+```bash
+ls -l /dev/input/js*
+getent group input | cut -d: -f3
+```
+
+必要なら `.env` に `INPUT_GID` を設定し、ゲームパッド用Compose設定を追加して
+コンテナを作り直します。初回またはDockerfile更新後はbuildも行います。
+
+```bash
+cd ~/ros2_docker
+docker compose -f compose.yaml -f compose.gamepad.yaml up -d --build
+docker compose -f compose.yaml -f compose.gamepad.yaml exec ros2 bash
+ros2 launch tb20e_control tb20e_gamepad.launch.py
+```
+
+`/dev/input` 全体をread-onlyでコンテナへ渡すため、`js0` と対応する `event*` の両方を
+SDLベースの `joy_node` が参照できます。既定の `INPUT_GID` は `107` です。ホストの
+`input` group GIDが異なる場合は `.env` で上書きしてください。
+スティック割り当てや反転方法は `tb20e_ros2/README.md` の
+「USBゲームパッドでの操作」を参照してください。
+
 別ターミナルから controller 状態を調べる例です。
 
 ```bash

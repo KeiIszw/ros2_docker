@@ -20,6 +20,7 @@ RUN apt-get update \
         ros-humble-robot-state-publisher \
         ros-humble-ros2-control \
         ros-humble-ros2-controllers \
+        ros-humble-joy \
         ros-humble-xacro \
         sudo \
     && rm -rf /var/lib/apt/lists/*
@@ -43,4 +44,3 @@ USER ${USERNAME}
 
 ENTRYPOINT ["/usr/local/bin/operasim_ros_entrypoint.sh"]
 CMD ["bash"]
-
