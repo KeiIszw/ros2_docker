@@ -3,6 +3,10 @@ name: operasim-ros2
 services:
   ros2:
     image: operasim-ros2:humble
+    privileged: true
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
     build:
       context: .
       args:

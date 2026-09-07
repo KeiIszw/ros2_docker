@@ -10,8 +10,12 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         bash-completion \
         build-essential \
+        can-utils \
         git \
+        iproute2 \
+        kmod \
         less \
+        python3-can \
         python3-colcon-common-extensions \
         python3-pip \
         python3-pytest \

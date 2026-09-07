@@ -1,0 +1,10 @@
+# services:
+#   ros2:
+#     # hardware_interface_open_0 expects the adapter at /dev/ttyACM0.
+#     # The adapter is ttyACM0 on the host, so give it the expected container name.
+#     devices:
+#       - /dev/ttyACM0:/dev/ttyACM0:rwm
+#     cap_add:
+#       - NET_ADMIN
+#     group_add:
+#       - ${SERIAL_GID:-20}
